@@ -87,8 +87,8 @@ class App extends Component {
       );
   }
 
-  clearText(){
-    document.getElementById("content").value="";
+  clearText() {
+    document.getElementById("content").value = "";
   }
 
   render() {
@@ -156,7 +156,12 @@ class App extends Component {
               onClick={this.getSyntaxResult}
               className="App-button"
             />
-            <input type="button" value="clear text" className="App-button" onClick={this.clearText} />
+            <input
+              type="button"
+              value="clear text"
+              className="App-button"
+              onClick={this.clearText}
+            />
           </div>
         </div>
 
