@@ -1,10 +1,6 @@
 import React, { Component } from "react";
 import "./App.css";
-import { Table, Icon, Divider } from "antd";
-
-function SetTextClear() {
-  document.getElementById("content").value = "";
-}
+import { Table } from "antd";
 
 class App extends Component {
   constructor(props) {
@@ -12,12 +8,16 @@ class App extends Component {
     this.state = {
       error: null,
       isLoaded: false,
-      items: []
+      lexical_items: [],
+      syntax_items: []
     };
     this.getLexicalResult = this.getLexicalResult.bind(this);
+    this.getSyntaxResult = this.getSyntaxResult.bind(this);
   }
 
   getLexicalResult() {
+    document.getElementById("syntax").style.display = "none";
+    document.getElementById("lexical").style.display = "inline";
     let parameters = { text: document.getElementById("content").value };
     fetch("http://localhost:8080/lexicalAnalyser", {
       method: "post",
@@ -34,9 +34,10 @@ class App extends Component {
           console.log(result);
           this.setState({
             isLoaded: true,
-            items: result
+            lexical_items: result,
+            syntax_items: []
           });
-          console.log(this.state.items);
+          //console.log(this.state.lexical_items);
         },
         // Note: it's important to handle errors here
         // instead of a catch() block so that we don't swallow
@@ -50,9 +51,49 @@ class App extends Component {
       );
   }
 
+  getSyntaxResult() {
+    document.getElementById("syntax").style.display = "inline";
+    document.getElementById("lexical").style.display = "none";
+    let parameters = { text: document.getElementById("content").value };
+    fetch("http://localhost:8080/syntaxAnalyser", {
+      method: "post",
+      mode: "cors",
+      headers: {
+        Accept: "application/json",
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify(parameters)
+    })
+      .then(res => res.json())
+      .then(
+        result => {
+          console.log(result);
+          this.setState({
+            isLoaded: true,
+            syntax_items: result,
+            lexical_items: []
+          });
+          //console.log(this.state.syntax_items);
+        },
+        // Note: it's important to handle errors here
+        // instead of a catch() block so that we don't swallow
+        // exceptions from actual bugs in components.
+        error => {
+          this.setState({
+            isLoaded: true,
+            error
+          });
+        }
+      );
+  }
+
+  clearText(){
+    document.getElementById("content").value="";
+  }
+
   render() {
     const rowslength = 15;
-    const columns = [
+    const lexical = [
       {
         title: "Number",
         dataIndex: "number",
@@ -67,12 +108,26 @@ class App extends Component {
       },
       {
         title: "Content",
-        dataIndex: "name",
-        key: "name",
+        dataIndex: "content",
+        key: "content",
         width: 220
       }
     ];
-    const { items } = this.state;
+    const syntax = [
+      {
+        title: "ErrorLine",
+        dataIndex: "line",
+        key: "line",
+        width: 330
+      },
+      {
+        title: "ErrorType",
+        dataIndex: "type",
+        key: "type",
+        width: 330
+      }
+    ];
+    const { lexical_items, syntax_items } = this.state;
     return (
       <div className="App-darea">
         <div className="App-ddarea">
@@ -83,7 +138,7 @@ class App extends Component {
               clos="20"
               rows={rowslength}
               className="App-textarea"
-              placeholder="please input"
+              placeholder="please input codes here"
             />
           </div>
           <div className="App-buttonarea">
@@ -98,31 +153,35 @@ class App extends Component {
             <input
               type="button"
               value="syntax analysis"
+              onClick={this.getSyntaxResult}
               className="App-button"
             />
-            <input
-              type="button"
-              value="clear text"
-              className="App-button"
-            />
+            <input type="button" value="clear text" className="App-button" onClick={this.clearText} />
           </div>
         </div>
 
         {/* lexical analyser */}
-        <div className="App-tablearea">
+        <div className="App-tablearea" id="lexical">
           <p>result of lexical analysis</p>
           <Table
-            columns={columns}
+            columns={lexical}
             size="small"
-            dataSource={items}
+            dataSource={lexical_items}
             pagination={{ pageSize: 50 }}
-            scroll={{ y: 150 }}
+            scroll={{ y: 250 }}
           />
         </div>
 
         {/* syntax analyser */}
-        <div className="App-ddarea">
-          <label className="App-syntax">result</label>
+        <div className="App-tablearea" id="syntax">
+          <p>result of syntax analysis</p>
+          <Table
+            columns={syntax}
+            size="small"
+            dataSource={syntax_items}
+            pagination={{ pageSize: 50 }}
+            scroll={{ y: 250 }}
+          />
         </div>
       </div>
     );
